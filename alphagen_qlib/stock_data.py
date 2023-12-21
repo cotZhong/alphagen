@@ -53,12 +53,17 @@ class StockData:
         if not isinstance(exprs, list):
             exprs = [exprs]
         cal: np.ndarray = D.calendar()
+        # print(cal)
         start_index = cal.searchsorted(pd.Timestamp(self._start_time))  # type: ignore
         end_index = cal.searchsorted(pd.Timestamp(self._end_time))  # type: ignore
+        print(start_index, end_index)
         real_start_time = cal[start_index - self.max_backtrack_days]
         if cal[end_index] != pd.Timestamp(self._end_time):
             end_index -= 1
         real_end_time = cal[end_index + self.max_future_days]
+        print(real_start_time, real_end_time)
+        print(QlibDataLoader(config=exprs)  # type: ignore
+                .load(self._instrument, real_start_time, real_end_time))
         return (QlibDataLoader(config=exprs)  # type: ignore
                 .load(self._instrument, real_start_time, real_end_time))
 
@@ -69,6 +74,7 @@ class StockData:
         dates = df.index.levels[0]                                      # type: ignore
         stock_ids = df.columns
         values = df.values
+        # print(values, values.shape)
         values = values.reshape((-1, len(features), values.shape[-1]))  # type: ignore
         return torch.tensor(values, dtype=torch.float, device=self.device), dates, stock_ids
 
@@ -82,6 +88,7 @@ class StockData:
 
     @property
     def n_days(self) -> int:
+        # print(self.data.shape[0], self.max_backtrack_days, self.max_future_days)
         return self.data.shape[0] - self.max_backtrack_days - self.max_future_days
 
     def make_dataframe(

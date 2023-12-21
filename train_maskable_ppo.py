@@ -97,20 +97,26 @@ def main(
 ):
     reseed_everything(seed)
 
-    device = torch.device('cuda:0')
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     close = Feature(FeatureType.CLOSE)
     target = Ref(close, -20) / close - 1
 
     # You can re-implement AlphaCalculator instead of using QLibStockDataCalculator.
     data_train = StockData(instrument=instruments,
                            start_time='2010-01-01',
-                           end_time='2019-12-31')
+                           end_time='2018-12-31',
+                           device=device)
+    print('train', data_train.data.shape)
     data_valid = StockData(instrument=instruments,
-                           start_time='2020-01-01',
-                           end_time='2020-12-31')
+                           start_time='2019-01-01',
+                           end_time='2019-12-31',
+                           device=device)
+    print('valid', data_valid.data.shape)
     data_test = StockData(instrument=instruments,
-                          start_time='2021-01-01',
-                          end_time='2022-12-31')
+                          start_time='2020-01-01',
+                          end_time='2023-08-30',
+                          device=device)
+    print('test', data_test.data.shape)
     calculator_train = QLibStockDataCalculator(data_train, target)
     calculator_valid = QLibStockDataCalculator(data_valid, target)
     calculator_test = QLibStockDataCalculator(data_test, target)
@@ -129,7 +135,7 @@ def main(
     checkpoint_callback = CustomCallback(
         save_freq=10000,
         show_freq=10000,
-        save_path='/path/for/checkpoints',
+        save_path='path/for/checkpoints',
         valid_calculator=calculator_valid,
         test_calculator=calculator_test,
         name_prefix=name_prefix,
@@ -152,7 +158,7 @@ def main(
         gamma=1.,
         ent_coef=0.01,
         batch_size=128,
-        tensorboard_log='/path/for/tb/log',
+        tensorboard_log='path/for/tb/log',
         device=device,
         verbose=1,
     )
